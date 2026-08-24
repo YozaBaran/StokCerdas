@@ -1,0 +1,25 @@
+{
+  "name": "stokcerdas-platform",
+  "version": "2.0.0",
+  "description": "StokCerdas — AI-Powered Inventory & Food Waste Management Backend Node.js & MySQL",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js"
+  },
+  "keywords": [
+    "stokcerdas",
+    "nodejs",
+    "express",
+    "mysql",
+    "inventory",
+    "food-waste"
+  ],
+  "author": "StokCerdas Team",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "mysql2": "^3.23.3"
+  }
+}
