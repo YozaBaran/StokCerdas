@@ -15,7 +15,7 @@ import {
 } from './seedData.js';
 
 const STORAGE_KEY = 'stokcerdas_app_state_v1';
-const MYSQL_API_URL = window.location.origin.includes('5000') ? '/api' : 'http://localhost:5000/api';
+const MYSQL_API_URL = '/api';
 
 export const DEMO_USERS = [
   {
