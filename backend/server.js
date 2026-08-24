@@ -28,7 +28,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static frontend files
-const frontendPath = path.join(__dirname, '../frontend');
+const frontendPath = path.join(__dirname, '../');
 app.use(express.static(frontendPath));
 
 // API Endpoint Mounts
