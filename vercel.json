@@ -6,6 +6,10 @@
       "destination": "/api/index.js"
     },
     {
+      "source": "/",
+      "destination": "/frontend/index.html"
+    },
+    {
       "source": "/css/(.*)",
       "destination": "/frontend/css/$1"
     },
@@ -15,7 +19,7 @@
     },
     {
       "source": "/(.*)",
-      "destination": "/frontend/index.html"
+      "destination": "/frontend/$1"
     }
   ]
 }
