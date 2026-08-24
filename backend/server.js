@@ -64,12 +64,17 @@ app.get('{*path}', (req, res) => {
   }
 });
 
-// Server Initialization
-app.listen(PORT, async () => {
-  console.log(`\n======================================================`);
-  console.log(`🚀 StokCerdas Backend Server Running on http://localhost:${PORT}`);
-  console.log(`🌐 Frontend Web App Hosted at: http://localhost:${PORT}`);
-  console.log(`======================================================\n`);
+// Server Initialization (Local Development & Export for Vercel)
+if (require.main === module) {
+  app.listen(PORT, async () => {
+    console.log(`\n======================================================`);
+    console.log(`🚀 StokCerdas Backend Server Running on http://localhost:${PORT}`);
+    console.log(`🌐 Frontend Web App Hosted at: http://localhost:${PORT}`);
+    console.log(`======================================================\n`);
 
-  await testConnection();
-});
+    await testConnection();
+  });
+}
+
+module.exports = app;
+

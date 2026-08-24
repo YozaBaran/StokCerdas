@@ -55,7 +55,7 @@ router.post('/', async (req, res) => {
         await pool.query(
           `INSERT INTO users (id, email, password, name, role, business_name)
            VALUES (?, ?, ?, ?, ?, ?)
-           ON DUPLICATE KEY UPDATE name = VALUES(name), role = VALUES(role), business_name = VALUES(business_name)`,
+           ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, role = EXCLUDED.role, business_name = EXCLUDED.business_name`,
           [
             u.id || `usr-${Date.now()}`,
             u.email,
