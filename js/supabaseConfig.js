@@ -1,8 +1,8 @@
 /* StokCerdas — Supabase Client SDK Configuration & Initialization */
 
 // Supabase Project Credentials (Dapat diubah atau disetting via LocalStorage/Environment)
-const DEFAULT_SUPABASE_URL = localStorage.getItem('stokcerdas_supabase_url') || 'https://YOUR_SUPABASE_PROJECT_ID.supabase.co';
-const DEFAULT_SUPABASE_ANON_KEY = localStorage.getItem('stokcerdas_supabase_key') || 'YOUR_SUPABASE_ANON_KEY';
+const DEFAULT_SUPABASE_URL = localStorage.getItem('stokcerdas_supabase_url') || 'https://mlykohaduptibyzkhmil.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = localStorage.getItem('stokcerdas_supabase_key') || 'sb_publishable_oJWpflkTRfH-0JqcPunL2w_uugcEAeq';
 
 let supabaseClient = null;
 
@@ -23,7 +23,7 @@ export function getSupabaseClient() {
 export function isSupabaseConfigured() {
   const url = localStorage.getItem('stokcerdas_supabase_url') || DEFAULT_SUPABASE_URL;
   const key = localStorage.getItem('stokcerdas_supabase_key') || DEFAULT_SUPABASE_ANON_KEY;
-  return url && key && !url.includes('YOUR_SUPABASE_PROJECT_ID') && !key.includes('YOUR_SUPABASE_ANON_KEY');
+  return url && key && !url.includes('YOUR_SUPABASE_PROJECT_ID') && key !== 'YOUR_SUPABASE_ANON_KEY';
 }
 
 export function setSupabaseCredentials(url, key) {
