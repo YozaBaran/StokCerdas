@@ -1,4 +1,4 @@
-/* StokCerdas — Surplus Detection & Rescue Action Engine */
+ /* StokCerdas — Surplus Detection & Rescue Action Engine */
 
 import { formatIDR } from '../utils.js';
 

@@ -97,7 +97,19 @@ function renderProductRows(products) {
   if (!tbody) return;
 
   if (products.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--slate-400); padding: 30px;">Tidak ada produk ditemukan.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px 20px;">
+      <div style="max-width: 400px; margin: 0 auto;">
+        <i data-lucide="package-open" style="width: 48px; height: 48px; color: var(--slate-300); margin-bottom: 12px;"></i>
+        <h4 style="margin-bottom: 6px; color: var(--slate-700);">Katalog Produk Masih Kosong</h4>
+        <p style="font-size: 0.85rem; color: var(--slate-500); margin-bottom: 16px;">Tambahkan produk/bahan baku pertama toko Anda untuk mulai memantau stok dan penjualan.</p>
+        <button id="empty-add-product-btn" class="btn btn-primary btn-sm"><i data-lucide="plus"></i> Tambah Produk Pertama</button>
+      </div>
+    </td></tr>`;
+    if (window.lucide) window.lucide.createIcons();
+    document.getElementById('empty-add-product-btn')?.addEventListener('click', () => {
+      const state = store.getState();
+      openProductModal(state.categories, state.suppliers);
+    });
     return;
   }
 

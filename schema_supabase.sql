@@ -1,69 +1,44 @@
 -- ============================================================
--- DATABASE SCHEMA & SEED DATA: StokCerdas Platform (Supabase PostgreSQL)
--- Backend: Node.js Express + pg (node-postgres)
--- Paste & Run this script in your Supabase Dashboard -> SQL Editor
+-- DATABASE SCHEMA & RLS POLICIES: StokCerdas Platform (Supabase PostgreSQL)
+-- Target: Supabase SQL Editor
+-- Features: Supabase Auth Integration, Multi-Tenancy Data Isolation (RLS)
 -- ============================================================
 
--- 1. USERS TABLE
-CREATE TABLE IF NOT EXISTS users (
-  id VARCHAR(50) NOT NULL PRIMARY KEY,
-  email VARCHAR(100) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  role VARCHAR(20) NOT NULL DEFAULT 'owner',
-  business_name VARCHAR(100) NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-
--- Seed Users
-INSERT INTO users (id, email, password, name, role, business_name) VALUES
-('usr-001', 'owner@kedainusantara.com', 'password123', 'Budi Santoso', 'owner', 'Kedai Nusantara'),
-('usr-002', 'manager@kedainusantara.com', 'password123', 'Siti Rahma', 'manager', 'Kedai Nusantara'),
-('usr-003', 'staff@kedainusantara.com', 'password123', 'Agus Pratama', 'staff', 'Kedai Nusantara')
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
-
--- 2. BUSINESSES TABLE
+-- 1. BUSINESSES TABLE (Toko / UMKM per User)
 CREATE TABLE IF NOT EXISTS businesses (
   id VARCHAR(50) NOT NULL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   type VARCHAR(100) NOT NULL,
   owner VARCHAR(100) NOT NULL,
-  location VARCHAR(100) DEFAULT 'Jakarta'
+  location VARCHAR(100) DEFAULT 'Jakarta',
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO businesses (id, name, type, owner, location) VALUES
-('biz-001', 'Kedai Nusantara', 'UMKM Kuliner (Restoran & Katering)', 'Budi Santoso', 'Jakarta Selatan')
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
-
--- 3. SUPPLIERS TABLE
+-- 2. SUPPLIERS TABLE (Pemasok per User)
 CREATE TABLE IF NOT EXISTS suppliers (
   id VARCHAR(50) NOT NULL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
   name VARCHAR(100) NOT NULL,
   contact VARCHAR(50) NOT NULL,
   email VARCHAR(100),
   lead_time_days INT NOT NULL DEFAULT 2,
   moq INT NOT NULL DEFAULT 1,
   payment_terms VARCHAR(100) DEFAULT 'COD',
-  fulfillment_rate INT DEFAULT 95
+  fulfillment_rate INT DEFAULT 95,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO suppliers (id, name, contact, email, lead_time_days, moq, payment_terms, fulfillment_rate) VALUES
-('sup-101', 'PT Agrimart Pangan Utama', '0812-3456-7890 (Pak Hery)', 'order@agrimart.co.id', 2, 10, 'Tempo 14 Hari', 98),
-('sup-102', 'CV Berkah Sembako Nusantara', '0813-9876-5432 (Bu Dewi)', 'berkahsembako@gmail.com', 1, 5, 'Tunai Saat Diterima (COD)', 95),
-('sup-103', 'Koperasi Tani Segar Jaya', '0857-1122-3344 (Pak Jarwo)', 'koperasitani@jawa.id', 1, 3, 'Tunai Saat Diterima (COD)', 92),
-('sup-104', 'PT Dairy & Beverage Indonesia', '0811-4455-6677 (Sales Team)', 'sales@dairyindo.com', 3, 12, 'Tempo 30 Hari', 100),
-('sup-105', 'Toko Roti & Bahan Katering Prima', '0821-7788-9900 (Pak Budi)', 'primakatering@yahoo.com', 1, 5, 'Tunai Saat Diterima (COD)', 96)
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
-
--- 4. PRODUCTS TABLE
+-- 3. PRODUCTS TABLE (Katalog Produk & Stok per User)
 CREATE TABLE IF NOT EXISTS products (
   id VARCHAR(50) NOT NULL PRIMARY KEY,
-  sku VARCHAR(50) NOT NULL UNIQUE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  sku VARCHAR(50) NOT NULL,
   name VARCHAR(100) NOT NULL,
   category VARCHAR(50) NOT NULL,
   unit VARCHAR(20) NOT NULL,
-  purchase_price NUMERIC(12,2) NOT NULL,
-  selling_price NUMERIC(12,2) NOT NULL,
+  purchase_price NUMERIC(12,2) NOT NULL DEFAULT 0,
+  selling_price NUMERIC(12,2) NOT NULL DEFAULT 0,
   current_stock NUMERIC(10,2) NOT NULL DEFAULT 0,
   minimum_stock NUMERIC(10,2) NOT NULL DEFAULT 5,
   safety_stock NUMERIC(10,2) NOT NULL DEFAULT 3,
@@ -71,24 +46,15 @@ CREATE TABLE IF NOT EXISTS products (
   supplier_id VARCHAR(50) REFERENCES suppliers(id) ON DELETE SET NULL,
   expiry_tracking SMALLINT DEFAULT 1,
   shelf_life_days INT DEFAULT 14,
-  active SMALLINT DEFAULT 1
+  active SMALLINT DEFAULT 1,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO products (id, sku, name, category, unit, purchase_price, selling_price, current_stock, minimum_stock, safety_stock, lead_time_days, supplier_id, expiry_tracking, shelf_life_days) VALUES
-('prd-001', 'BU-AYM-1001', 'Ayam Fillet Dada', 'Bahan Utama', 'kg', 48000.00, 75000.00, 10.00, 12.00, 5.00, 2, 'sup-101', 1, 5),
-('prd-002', 'SMB-BRS-1002', 'Beras Ramos Super', 'Sembako', 'kg', 13500.00, 17000.00, 25.00, 15.00, 8.00, 1, 'sup-102', 1, 90),
-('prd-003', 'BU-DNG-1003', 'Daging Sapi Rendang', 'Bahan Utama', 'kg', 110000.00, 155000.00, 6.00, 8.00, 4.00, 2, 'sup-101', 1, 7),
-('prd-004', 'SMB-MYK-1004', 'Minyak Goreng Sawit', 'Sembako', 'Liter', 15500.00, 19000.00, 30.00, 10.00, 5.00, 1, 'sup-102', 0, 180),
-('prd-005', 'BU-TLR-1005', 'Telur Ayam Negeri', 'Bahan Utama', 'kg', 26000.00, 32000.00, 14.00, 10.00, 5.00, 1, 'sup-102', 1, 14),
-('prd-006', 'DRY-SSU-1006', 'Susu UHT Plain 1L', 'Olahan & Dairy', 'Liter', 18000.00, 24000.00, 18.00, 10.00, 4.00, 3, 'sup-104', 1, 45),
-('prd-007', 'DRY-RTI-1007', 'Roti Tawar Kupas', 'Olahan & Dairy', 'pack', 12000.00, 18000.00, 15.00, 8.00, 3.00, 1, 'sup-105', 1, 4),
-('prd-008', 'SYR-CBI-1008', 'Cabai Merah Keriting', 'Sayur & Bumbu', 'kg', 42000.00, 58000.00, 3.00, 5.00, 2.00, 1, 'sup-103', 1, 5)
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
-
--- 5. STOCK TRANSACTIONS TABLE
+-- 4. STOCK TRANSACTIONS TABLE (Audit Mutasi Stok per User)
 CREATE TABLE IF NOT EXISTS stock_transactions (
   id VARCHAR(50) NOT NULL PRIMARY KEY,
-  timestamp TIMESTAMPTZ NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   product_id VARCHAR(50) NOT NULL,
   product_name VARCHAR(100) NOT NULL,
   type VARCHAR(50) NOT NULL,
@@ -99,19 +65,22 @@ CREATE TABLE IF NOT EXISTS stock_transactions (
   "user" VARCHAR(100) NOT NULL
 );
 
--- 6. SALES TABLE
+-- 5. SALES TABLE (Pencatatan Penjualan Kasir per User)
 CREATE TABLE IF NOT EXISTS sales (
   id VARCHAR(50) NOT NULL PRIMARY KEY,
-  timestamp TIMESTAMPTZ NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   total_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
   payment_method VARCHAR(50) DEFAULT 'Cash',
+  items JSONB DEFAULT '[]'::jsonb,
   "user" VARCHAR(100) DEFAULT 'Kasir'
 );
 
--- 7. WASTE RECORDS TABLE
+-- 6. WASTE RECORDS TABLE (Pelacakan Food Waste per User)
 CREATE TABLE IF NOT EXISTS waste_records (
   id VARCHAR(50) NOT NULL PRIMARY KEY,
-  timestamp TIMESTAMPTZ NOT NULL,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
   product_id VARCHAR(50),
   product_name VARCHAR(100) NOT NULL,
   quantity NUMERIC(10,2) NOT NULL,
@@ -120,10 +89,74 @@ CREATE TABLE IF NOT EXISTS waste_records (
   "user" VARCHAR(100) DEFAULT 'Staff'
 );
 
--- 8. APP STATE BACKUP DUMP TABLE
-CREATE TABLE IF NOT EXISTS app_state_backup (
-  id SERIAL PRIMARY KEY,
-  business_id VARCHAR(50) NOT NULL DEFAULT 'biz-001',
-  state_json TEXT NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+-- 7. PURCHASE ORDERS TABLE (PO ke Supplier per User)
+CREATE TABLE IF NOT EXISTS purchase_orders (
+  id VARCHAR(50) NOT NULL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  supplier_id VARCHAR(50) REFERENCES suppliers(id) ON DELETE SET NULL,
+  supplier_name VARCHAR(100) NOT NULL,
+  order_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  expected_date TIMESTAMPTZ,
+  status VARCHAR(20) DEFAULT 'DRAFT',
+  total_amount NUMERIC(12,2) DEFAULT 0,
+  items JSONB DEFAULT '[]'::jsonb
 );
+
+-- 8. EXPIRY BATCHES TABLE (Pelacakan Kadaluarsa Stok per User)
+CREATE TABLE IF NOT EXISTS expiry_batches (
+  id VARCHAR(50) NOT NULL PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  product_id VARCHAR(50) REFERENCES products(id) ON DELETE CASCADE,
+  batch_number VARCHAR(50) NOT NULL,
+  quantity NUMERIC(10,2) NOT NULL DEFAULT 0,
+  expiry_date DATE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================================
+-- ROW LEVEL SECURITY (RLS) POLICIES
+-- Memastikan setiap user HANYA bisa membaca/mengubah datanya sendiri!
+-- ============================================================
+
+ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE stock_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE waste_records ENABLE ROW LEVEL SECURITY;
+ALTER TABLE purchase_orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE expiry_batches ENABLE ROW LEVEL SECURITY;
+
+-- 1. Businesses Policies
+CREATE POLICY "Users can manage their own business" ON businesses
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 2. Suppliers Policies
+CREATE POLICY "Users can manage their own suppliers" ON suppliers
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 3. Products Policies
+CREATE POLICY "Users can manage their own products" ON products
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 4. Stock Transactions Policies
+CREATE POLICY "Users can manage their own stock transactions" ON stock_transactions
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 5. Sales Policies
+CREATE POLICY "Users can manage their own sales" ON sales
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 6. Waste Records Policies
+CREATE POLICY "Users can manage their own waste records" ON waste_records
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 7. Purchase Orders Policies
+CREATE POLICY "Users can manage their own purchase orders" ON purchase_orders
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+-- 8. Expiry Batches Policies
+CREATE POLICY "Users can manage their own expiry batches" ON expiry_batches
+  FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
+

@@ -71,7 +71,9 @@ export function renderOnboarding(onNavigate, onCompleteOnboarding) {
         renderWizardStep();
       } else {
         // Complete Onboarding!
-        store.setDemoMode(true); // Activate full ready-to-use workspace!
+        const state = store.getState();
+        state.isOnboarded = true;
+        store.saveState();
         showToast('Selamat! Setup StokCerdas selesai.', 'success');
         if (onCompleteOnboarding) onCompleteOnboarding();
       }
